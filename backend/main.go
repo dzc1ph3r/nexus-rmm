@@ -25,6 +25,12 @@ func main() {
 	migrateName := flag.String("name", "", "Migration name (for create command)")
 	flag.Parse()
 
+	// Check positional arguments for mode (for Docker ENTRYPOINT compatibility)
+	args := flag.Args()
+	if len(args) > 0 {
+		*mode = args[0]
+	}
+
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
@@ -35,6 +41,9 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer db.Close()
+
+	// Register migrations
+	storage.RegisterMigrations()
 
 	// Handle migration commands
 	if *mode == "migrate" {
@@ -102,6 +111,9 @@ func runAPIServer(cfg *config.Config, db *storage.Database, authService *auth.Au
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok", "timestamp": time.Now()})
+	})
+	router.HEAD("/health", func(c *gin.Context) {
+		c.Status(http.StatusOK)
 	})
 
 	router.GET("/api/v1/version", func(c *gin.Context) {
