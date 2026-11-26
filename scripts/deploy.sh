@@ -151,14 +151,11 @@ wait_for_health() {
     while [[ $attempt -lt $max_attempts ]]; do
         local healthy=true
 
-        # Check each service
+        # Check each service using docker inspect
         for service in postgres redis backend gateway frontend; do
+            local container_name="nexus-rmm-$service"
             local status
-            if [[ "$ENVIRONMENT" == "production" ]]; then
-                status=$(docker-compose -f docker-compose.prod.yml ps --format json $service 2>/dev/null | jq -r '.[0].Health // "unknown"' 2>/dev/null || echo "unknown")
-            else
-                status=$(docker-compose ps --format json $service 2>/dev/null | jq -r '.[0].Health // "unknown"' 2>/dev/null || echo "unknown")
-            fi
+            status=$(docker inspect --format='{{.State.Health.Status}}' "$container_name" 2>/dev/null || echo "unknown")
 
             if [[ "$status" != "healthy" ]]; then
                 healthy=false

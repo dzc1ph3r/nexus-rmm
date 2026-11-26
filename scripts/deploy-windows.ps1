@@ -201,8 +201,10 @@ while ($attempt -lt $maxAttempts) {
 
     $services = @("postgres", "redis", "backend", "gateway", "frontend")
     foreach ($service in $services) {
-        $status = docker-compose -f $composePath ps --format json $service 2>$null | ConvertFrom-Json 2>$null
-        if ($status -and $status.Health -ne "healthy") {
+        $containerName = "nexus-rmm-$service"
+        # Check container health status using docker inspect
+        $healthStatus = docker inspect --format='{{.State.Health.Status}}' $containerName 2>$null
+        if ($healthStatus -ne "healthy") {
             $allHealthy = $false
             break
         }
