@@ -38,14 +38,12 @@ services:
   # Backend API Server
   backend:
     build:
-      context: ../backend
-      dockerfile: ../docker/Dockerfile.backend
+      context: ..
+      dockerfile: docker/Dockerfile.backend
     container_name: nexus-rmm-backend
     environment:
       CONFIG_FILE: /app/config.yaml
       GIN_MODE: release
-    volumes:
-      - ../backend/config.yaml:/app/config.yaml:ro
     ports:
       - "8080:8080"
     depends_on:
@@ -65,14 +63,13 @@ services:
   # Remote Access Gateway (WebRTC Signaling)
   gateway:
     build:
-      context: ../backend
-      dockerfile: ../docker/Dockerfile.gateway
+      context: ..
+      dockerfile: docker/Dockerfile.gateway
     container_name: nexus-rmm-gateway
     environment:
       CONFIG_FILE: /app/config.yaml
       GIN_MODE: release
     volumes:
-      - ../backend/config.yaml:/app/config.yaml:ro
       - recordings:/var/lib/nexus-rmm/recordings
     ports:
       - "8443:8443"
@@ -91,14 +88,14 @@ services:
   # Frontend (served via Nginx)
   frontend:
     build:
-      context: ../frontend
-      dockerfile: ../docker/Dockerfile.frontend
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
     container_name: nexus-rmm-frontend
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./certs:/etc/nginx/certs:ro
     depends_on:
       - backend
