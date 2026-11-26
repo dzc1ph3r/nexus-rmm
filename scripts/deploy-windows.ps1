@@ -202,9 +202,22 @@ while ($attempt -lt $maxAttempts) {
     $services = @("postgres", "redis", "backend", "gateway", "frontend")
     foreach ($service in $services) {
         $containerName = "nexus-rmm-$service"
-        # Check container health status using docker inspect
-        $healthStatus = docker inspect --format='{{.State.Health.Status}}' $containerName 2>$null
-        if ($healthStatus -ne "healthy") {
+        # Check container state - first check if running, then check health if available
+        $containerState = docker inspect --format='{{.State.Status}} {{.State.Health.Status}}' $containerName 2>$null
+        if (-not $containerState) {
+            $allHealthy = $false
+            break
+        }
+        $parts = $containerState.Split(' ')
+        $status = $parts[0]
+        $healthStatus = if ($parts.Count -gt 1) { $parts[1] } else { "none" }
+
+        if ($status -ne "running") {
+            $allHealthy = $false
+            break
+        }
+        # If health check exists, require it to be healthy
+        if ($healthStatus -ne "none" -and $healthStatus -ne "healthy") {
             $allHealthy = $false
             break
         }
@@ -223,7 +236,7 @@ while ($attempt -lt $maxAttempts) {
 Write-Host ""
 
 if ($healthy) {
-    Write-Host "All services are healthy" -ForegroundColor Green
+    Write-Host "All services are healthy/running" -ForegroundColor Green
 } else {
     Write-Warning "Timeout waiting for services to be healthy"
     Write-Host "Check logs with: docker-compose -f $composeFile logs -f" -ForegroundColor Yellow

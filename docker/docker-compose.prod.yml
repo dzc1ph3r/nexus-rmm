@@ -56,8 +56,8 @@ services:
     environment:
       CONFIG_FILE: /app/config.yaml
       GIN_MODE: release
-    ports:
-      - "127.0.0.1:8080:8080"
+    expose:
+      - "8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -68,6 +68,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 10s
     networks:
       - nexus-network
     restart: unless-stopped
@@ -89,8 +90,8 @@ services:
       GIN_MODE: release
     volumes:
       - recordings:/var/lib/nexus-rmm/recordings
-    ports:
-      - "127.0.0.1:8443:8443"
+    expose:
+      - "8443"
     depends_on:
       backend:
         condition: service_healthy
@@ -99,6 +100,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 10s
     networks:
       - nexus-network
     restart: unless-stopped

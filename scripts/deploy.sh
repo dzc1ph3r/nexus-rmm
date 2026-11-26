@@ -154,17 +154,31 @@ wait_for_health() {
         # Check each service using docker inspect
         for service in postgres redis backend gateway frontend; do
             local container_name="nexus-rmm-$service"
-            local status
-            status=$(docker inspect --format='{{.State.Health.Status}}' "$container_name" 2>/dev/null || echo "unknown")
+            local state_output
+            state_output=$(docker inspect --format='{{.State.Status}} {{.State.Health.Status}}' "$container_name" 2>/dev/null)
 
-            if [[ "$status" != "healthy" ]]; then
+            if [[ -z "$state_output" ]]; then
+                healthy=false
+                break
+            fi
+
+            local status=$(echo "$state_output" | awk '{print $1}')
+            local health_status=$(echo "$state_output" | awk '{print $2}')
+
+            if [[ "$status" != "running" ]]; then
+                healthy=false
+                break
+            fi
+
+            # If health check exists, require it to be healthy
+            if [[ "$health_status" != "none" && "$health_status" != "healthy" ]]; then
                 healthy=false
                 break
             fi
         done
 
         if [[ "$healthy" == "true" ]]; then
-            print_success "All services are healthy"
+            print_success "All services are healthy/running"
             return 0
         fi
 
