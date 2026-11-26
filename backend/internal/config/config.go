@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/spf13/viper"
@@ -186,6 +187,9 @@ func Load() (*Config, error) {
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("NEXUS")
 
+	// Explicitly bind environment variables to ensure they override config file
+	bindEnvs()
+
 	setDefaults()
 
 	if err := viper.ReadInConfig(); err != nil {
@@ -199,7 +203,128 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
+	// Override with environment variables explicitly (in case AutomaticEnv doesn't work)
+	overrideFromEnv(&cfg)
+
 	return &cfg, nil
+}
+
+func bindEnvs() {
+	// Database
+	viper.BindEnv("database.host", "NEXUS_DATABASE_HOST")
+	viper.BindEnv("database.port", "NEXUS_DATABASE_PORT")
+	viper.BindEnv("database.user", "NEXUS_DATABASE_USER")
+	viper.BindEnv("database.password", "NEXUS_DATABASE_PASSWORD")
+	viper.BindEnv("database.name", "NEXUS_DATABASE_NAME")
+	viper.BindEnv("database.ssl_mode", "NEXUS_DATABASE_SSL_MODE")
+	viper.BindEnv("database.max_connections", "NEXUS_DATABASE_MAX_CONNECTIONS")
+	viper.BindEnv("database.max_idle_connections", "NEXUS_DATABASE_MAX_IDLE_CONNECTIONS")
+	viper.BindEnv("database.conn_max_lifetime", "NEXUS_DATABASE_CONN_MAX_LIFETIME")
+
+	// Redis
+	viper.BindEnv("redis.host", "NEXUS_REDIS_HOST")
+	viper.BindEnv("redis.port", "NEXUS_REDIS_PORT")
+	viper.BindEnv("redis.password", "NEXUS_REDIS_PASSWORD")
+	viper.BindEnv("redis.db", "NEXUS_REDIS_DB")
+	viper.BindEnv("redis.pool_size", "NEXUS_REDIS_POOL_SIZE")
+	viper.BindEnv("redis.min_idle_conns", "NEXUS_REDIS_MIN_IDLE_CONNS")
+
+	// Auth
+	viper.BindEnv("auth.jwt_secret", "NEXUS_AUTH_JWT_SECRET")
+	viper.BindEnv("auth.jwt_issuer", "NEXUS_AUTH_JWT_ISSUER")
+	viper.BindEnv("auth.access_token_ttl", "NEXUS_AUTH_ACCESS_TOKEN_TTL")
+	viper.BindEnv("auth.refresh_token_ttl", "NEXUS_AUTH_REFRESH_TOKEN_TTL")
+	viper.BindEnv("auth.mfa_issuer", "NEXUS_AUTH_MFA_ISSUER")
+	viper.BindEnv("auth.bcrypt_cost", "NEXUS_AUTH_BCRYPT_COST")
+	viper.BindEnv("auth.max_login_attempts", "NEXUS_AUTH_MAX_LOGIN_ATTEMPTS")
+	viper.BindEnv("auth.lockout_duration", "NEXUS_AUTH_LOCKOUT_DURATION")
+	viper.BindEnv("auth.password_min_length", "NEXUS_AUTH_PASSWORD_MIN_LENGTH")
+	viper.BindEnv("auth.require_mfa", "NEXUS_AUTH_REQUIRE_MFA")
+
+	// Remote
+	viper.BindEnv("remote.gateway_host", "NEXUS_REMOTE_GATEWAY_HOST")
+	viper.BindEnv("remote.gateway_port", "NEXUS_REMOTE_GATEWAY_PORT")
+	viper.BindEnv("remote.websocket_path", "NEXUS_REMOTE_WEBSOCKET_PATH")
+	viper.BindEnv("remote.max_session_duration", "NEXUS_REMOTE_MAX_SESSION_DURATION")
+	viper.BindEnv("remote.session_cleanup_interval", "NEXUS_REMOTE_SESSION_CLEANUP_INTERVAL")
+	viper.BindEnv("remote.recording_enabled", "NEXUS_REMOTE_RECORDING_ENABLED")
+	viper.BindEnv("remote.recording_path", "NEXUS_REMOTE_RECORDING_PATH")
+}
+
+func overrideFromEnv(cfg *Config) {
+	// Database
+	if v := os.Getenv("NEXUS_DATABASE_HOST"); v != "" {
+		cfg.Database.Host = v
+	}
+	if v := os.Getenv("NEXUS_DATABASE_PORT"); v != "" {
+		if port, err := strconv.Atoi(v); err == nil {
+			cfg.Database.Port = port
+		}
+	}
+	if v := os.Getenv("NEXUS_DATABASE_USER"); v != "" {
+		cfg.Database.User = v
+	}
+	if v := os.Getenv("NEXUS_DATABASE_PASSWORD"); v != "" {
+		cfg.Database.Password = v
+	}
+	if v := os.Getenv("NEXUS_DATABASE_NAME"); v != "" {
+		cfg.Database.Name = v
+	}
+	if v := os.Getenv("NEXUS_DATABASE_SSL_MODE"); v != "" {
+		cfg.Database.SSLMode = v
+	}
+
+	// Redis
+	if v := os.Getenv("NEXUS_REDIS_HOST"); v != "" {
+		cfg.Redis.Host = v
+	}
+	if v := os.Getenv("NEXUS_REDIS_PORT"); v != "" {
+		if port, err := strconv.Atoi(v); err == nil {
+			cfg.Redis.Port = port
+		}
+	}
+	if v := os.Getenv("NEXUS_REDIS_PASSWORD"); v != "" {
+		cfg.Redis.Password = v
+	}
+	if v := os.Getenv("NEXUS_REDIS_DB"); v != "" {
+		if db, err := strconv.Atoi(v); err == nil {
+			cfg.Redis.DB = db
+		}
+	}
+
+	// Auth
+	if v := os.Getenv("NEXUS_AUTH_JWT_SECRET"); v != "" {
+		cfg.Auth.JWTSecret = v
+	}
+
+	// Remote
+	if v := os.Getenv("NEXUS_REMOTE_GATEWAY_HOST"); v != "" {
+		cfg.Remote.GatewayHost = v
+	}
+	if v := os.Getenv("NEXUS_REMOTE_GATEWAY_PORT"); v != "" {
+		if port, err := strconv.Atoi(v); err == nil {
+			cfg.Remote.GatewayPort = port
+		}
+	}
+	if v := os.Getenv("NEXUS_REMOTE_WEBSOCKET_PATH"); v != "" {
+		cfg.Remote.WebSocketPath = v
+	}
+	if v := os.Getenv("NEXUS_REMOTE_MAX_SESSION_DURATION"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			cfg.Remote.MaxSessionDuration = d
+		}
+	}
+	if v := os.Getenv("NEXUS_REMOTE_SESSION_CLEANUP_INTERVAL"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			cfg.Remote.SessionCleanupInterval = d
+		}
+	}
+	if v := os.Getenv("NEXUS_REMOTE_RECORDING_ENABLED"); v != "" {
+		cfg.Remote.RecordingEnabled = v == "true"
+	}
+	if v := os.Getenv("NEXUS_REMOTE_RECORDING_PATH"); v != "" {
+		cfg.Remote.RecordingPath = v
+	}
 }
 
 func setDefaults() {
