@@ -1,0 +1,49 @@
+# Build outputs
+/dist
+/build
+/*.exe
+*.test
+
+# Dependencies
+frontend/node_modules/
+backend/vendor/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+docker/.env
+
+# IDE/Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+/var/log/
+/logs/
+
+# Database
+*.db
+*.sqlite
+
+# Certificates
+docker/certs/
+docker/certbot/conf/
+
+# Coverage
+coverage/
+*.out
+
+# Misc
+*.tmp
+*.temp
+.tmp/
+temp/
