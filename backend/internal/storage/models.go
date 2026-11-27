@@ -27,9 +27,7 @@ type User struct {
 	IsActive       bool      `bun:"is_active,notnull,default:true"`
 	OrganizationID uuid.UUID `bun:"organization_id,type:uuid,notnull"`
 	Organization   *Organization `bun:"rel:belongs-to,join:organization_id=id"`
-
-	RefreshTokens []RefreshToken `bun:"rel:has-many,join:id=user_id"`
-	APIKeys       []APIKey       `bun:"rel:has-many,join:id=user_id"`
+	// Has-many relations removed to avoid bun v1.3 schema creation issues
 }
 
 type Organization struct {
@@ -43,12 +41,8 @@ type Organization struct {
 	SecondaryColor string `bun:"secondary_color"`
 	IsActive    bool   `bun:"is_active,notnull,default:true"`
 	Settings    map[string]interface{} `bun:"settings,type:jsonb,default:'{}'"`
-
-	Users     []User       `bun:"rel:has-many,join:organization_id=id"`
-	Sites     []Site       `bun:"rel:has-many,join:organization_id=id"`
-	Devices   []Device     `bun:"rel:has-many,join:organization_id=id"`
-	Scripts   []Script     `bun:"rel:has-many,join:organization_id=id"`
-	Policies  []MonitoringPolicy `bun:"rel:has-many,join:organization_id=id"`
+	// Has-many relations removed to avoid bun v1.3 schema creation issues
+	// The belongs-to relations on the "many" side handle foreign keys
 }
 
 type Site struct {
@@ -63,8 +57,8 @@ type Site struct {
 	Timezone      string `bun:"timezone"`
 	OrganizationID uuid.UUID `bun:"organization_id,type:uuid,notnull"`
 	Organization  *Organization `bun:"rel:belongs-to,join:organization_id=id"`
-
-	Devices []Device `bun:"rel:has-many,join:site_id=id"`
+	// Has-many relations removed to avoid bun v1.3 schema creation issues
+	// The belongs-to relations on the "many" side handle foreign keys
 }
 
 type Device struct {
@@ -91,12 +85,8 @@ type Device struct {
 	Group            *DeviceGroup `bun:"rel:belongs-to,join:group_id=id"`
 
 	HardwareInfo     *HardwareInfo     `bun:"rel:has-one,join:id=device_id"`
-	SoftwareInventory []SoftwareInventory `bun:"rel:has-many,join:device_id=id"`
-	Metrics          []Metric         `bun:"rel:has-many,join:device_id=id"`
-	Alerts           []Alert          `bun:"rel:has-many,join:device_id=id"`
-	Sessions         []RemoteSession  `bun:"rel:has-many,join:device_id=id"`
-	ScriptExecutions []ScriptExecution `bun:"rel:has-many,join:device_id=id"`
-	Tasks            []Task           `bun:"rel:has-many,join:device_id=id"`
+	// Has-many relations removed to avoid bun v1.3 schema creation issues
+	// The belongs-to relations on the "many" side handle foreign keys
 }
 
 type DeviceGroup struct {
@@ -107,9 +97,7 @@ type DeviceGroup struct {
 	Organization   *Organization `bun:"rel:belongs-to,join:organization_id=id"`
 	ParentID       *uuid.UUID `bun:"parent_id,type:uuid"`
 	Parent         *DeviceGroup `bun:"rel:belongs-to,join:parent_id=id"`
-	Children       []DeviceGroup `bun:"rel:has-many,join:parent_id=id"`
-
-	Devices []Device `bun:"rel:has-many,join:group_id=id"`
+	// Has-many relations removed to avoid bun v1.3 schema creation issues
 }
 
 type HardwareInfo struct {
@@ -130,9 +118,9 @@ type HardwareInfo struct {
 	Manufacturer string    `bun:"manufacturer"`
 	Model        string    `bun:"model"`
 	SerialNumber string    `bun:"serial_number"`
-	GPUs         []GPUInfo `bun:"rel:has-many,join:hardware_info_id=id"`
-	Disks        []DiskInfo `bun:"rel:has-many,join:hardware_info_id=id"`
-	NetworkInterfaces []NetworkInterfaceInfo `bun:"rel:has-many,join:hardware_info_id=id"`
+	GPUs         []GPUInfo `bun:"-"`
+	Disks        []DiskInfo `bun:"-"`
+	NetworkInterfaces []NetworkInterfaceInfo `bun:"-"`
 }
 
 type GPUInfo struct {
@@ -157,7 +145,7 @@ type DiskInfo struct {
 	Interface      string    `bun:"interface"` // SATA, NVMe, etc.
 	Health         string    `bun:"health"`
 	Temperature    int       `bun:"temperature"`
-	Partitions     []PartitionInfo `bun:"rel:has-many,join:disk_info_id=id"`
+	Partitions     []PartitionInfo `bun:"-"`
 }
 
 type PartitionInfo struct {
@@ -220,8 +208,7 @@ type MonitoringPolicy struct {
 	Duration       time.Duration `bun:"duration"`
 	OrganizationID uuid.UUID `bun:"organization_id,type:uuid,notnull"`
 	Organization   *Organization `bun:"rel:belongs-to,join:organization_id=id"`
-
-	Alerts []Alert `bun:"rel:has-many,join:policy_id=id"`
+	// Has-many relations removed to avoid bun v1.3 schema creation issues
 }
 
 type Alert struct {
@@ -288,9 +275,8 @@ type RemoteSession struct {
 	Resolution     string    `bun:"resolution"`
 	IPAddress      string    `bun:"ip_address"`
 	Location       string    `bun:"location"`
-
-	Participants []SessionParticipant `bun:"rel:has-many,join:session_id=id"`
-	Events       []SessionEvent       `bun:"rel:has-many,join:session_id=id"`
+	Participants   []SessionParticipant `bun:"-"`
+	Events         []SessionEvent       `bun:"-"`
 }
 
 type SessionParticipant struct {
@@ -333,9 +319,7 @@ type Script struct {
 	Organization   *Organization `bun:"rel:belongs-to,join:organization_id=id"`
 	CreatedByID    uuid.UUID `bun:"created_by,type:uuid,notnull"`
 	CreatedBy      *User     `bun:"rel:belongs-to,join:created_by=id"`
-
-	Executions []ScriptExecution `bun:"rel:has-many,join:script_id=id"`
-	Schedules  []Schedule        `bun:"rel:has-many,join:script_id=id"`
+	// Has-many relations removed to avoid bun v1.3 schema creation issues
 }
 
 type ScriptExecution struct {
@@ -461,8 +445,7 @@ type Integration struct {
 	Organization *Organization `bun:"rel:belongs-to,join:organization_id=id"`
 	CreatedByID uuid.UUID `bun:"created_by,type:uuid,notnull"`
 	CreatedBy   *User     `bun:"rel:belongs-to,join:created_by=id"`
-
-	Triggers []IntegrationTrigger `bun:"rel:has-many,join:integration_id=id"`
+	// Has-many relations removed to avoid bun v1.3 schema creation issues
 }
 
 type IntegrationTrigger struct {

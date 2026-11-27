@@ -62,7 +62,7 @@ agent:
 
 monitoring:
   metrics_interval: 60s
-  retention_period: 30d
+  retention_period: 720h # 30 days
   alert_evaluation_interval: 30s
   notification_batch_size: 100
   max_alerts_per_device: 1000
@@ -116,11 +116,11 @@ license:
   enabled: true
   license_server_url: ""
   public_key: ""
-  grace_period: 7d
+  grace_period: 168h # 7 days
   check_interval: 24h
 
 audit:
   enabled: true
-  retention_period: 365d
+  retention_period: 8760h # 365 days
   batch_size: 100
   flush_interval: 5s

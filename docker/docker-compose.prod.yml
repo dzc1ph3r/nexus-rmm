@@ -53,9 +53,21 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.backend
     container_name: nexus-rmm-backend
+    env_file:
+      - .env
     environment:
       CONFIG_FILE: /app/config.yaml
       GIN_MODE: release
+      NEXUS_DATABASE_HOST: postgres
+      NEXUS_DATABASE_PORT: 5432
+      NEXUS_DATABASE_USER: nexus_rmm
+      NEXUS_DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      NEXUS_DATABASE_NAME: nexus_rmm
+      NEXUS_DATABASE_SSL_MODE: disable
+      NEXUS_REDIS_HOST: redis
+      NEXUS_REDIS_PORT: 6379
+      NEXUS_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      NEXUS_AUTH_JWT_SECRET: ${JWT_SECRET}
     expose:
       - "8080"
     depends_on:
@@ -85,9 +97,21 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.gateway
     container_name: nexus-rmm-gateway
+    env_file:
+      - .env
     environment:
       CONFIG_FILE: /app/config.yaml
       GIN_MODE: release
+      NEXUS_DATABASE_HOST: postgres
+      NEXUS_DATABASE_PORT: 5432
+      NEXUS_DATABASE_USER: nexus_rmm
+      NEXUS_DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      NEXUS_DATABASE_NAME: nexus_rmm
+      NEXUS_DATABASE_SSL_MODE: disable
+      NEXUS_REDIS_HOST: redis
+      NEXUS_REDIS_PORT: 6379
+      NEXUS_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      NEXUS_AUTH_JWT_SECRET: ${JWT_SECRET}
     volumes:
       - recordings:/var/lib/nexus-rmm/recordings
     expose:
@@ -118,10 +142,10 @@ services:
       dockerfile: docker/Dockerfile.frontend
     container_name: nexus-rmm-frontend
     ports:
-      - "80:80"
-      - "443:443"
+      - "8080:80"
+      - "8443:443"
     volumes:
-      - ./docker/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
       - ./certs:/etc/nginx/certs:ro
       - ./certbot/www:/var/www/certbot:ro
     depends_on:

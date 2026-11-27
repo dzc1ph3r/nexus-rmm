@@ -91,35 +91,72 @@ func (h *DeviceHandler) List(c *gin.Context) {
 
 	orgID := c.MustGet("organization_id").(uuid.UUID)
 
+	// Build base query for counting (without relations to avoid bun issues)
+	countQuery := h.db.NewSelect().
+		Model((*storage.Device)(nil)).
+		Where("device.organization_id = ?", orgID)
+
+	if req.Search != "" {
+		search := "%" + strings.ToLower(req.Search) + "%"
+		countQuery = countQuery.Where("(LOWER(device.name) LIKE ? OR LOWER(device.hostname) LIKE ? OR LOWER(device.ip_address) LIKE ?)", search, search, search)
+	}
+
+	if req.Status != "" {
+		countQuery = countQuery.Where("device.status = ?", req.Status)
+	}
+
+	if req.OS != "" {
+		countQuery = countQuery.Where("device.os = ?", req.OS)
+	}
+
+	if req.SiteID != "" {
+		if siteID, err := uuid.Parse(req.SiteID); err == nil {
+			countQuery = countQuery.Where("device.site_id = ?", siteID)
+		}
+	}
+
+	if req.GroupID != "" {
+		if groupID, err := uuid.Parse(req.GroupID); err == nil {
+			countQuery = countQuery.Where("device.group_id = ?", groupID)
+		}
+	}
+
+	total, err := countQuery.Count(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to count devices"})
+		return
+	}
+
+	// Build query for fetching with relations
 	query := h.db.NewSelect().
 		Model((*storage.Device)(nil)).
-		Where("organization_id = ?", orgID).
+		Where("device.organization_id = ?", orgID).
 		Relation("Site").
 		Relation("Group").
 		Relation("HardwareInfo")
 
 	if req.Search != "" {
 		search := "%" + strings.ToLower(req.Search) + "%"
-		query = query.Where("(LOWER(name) LIKE ? OR LOWER(hostname) LIKE ? OR LOWER(ip_address) LIKE ?)", search, search, search)
+		query = query.Where("(LOWER(device.name) LIKE ? OR LOWER(device.hostname) LIKE ? OR LOWER(device.ip_address) LIKE ?)", search, search, search)
 	}
 
 	if req.Status != "" {
-		query = query.Where("status = ?", req.Status)
+		query = query.Where("device.status = ?", req.Status)
 	}
 
 	if req.OS != "" {
-		query = query.Where("os = ?", req.OS)
+		query = query.Where("device.os = ?", req.OS)
 	}
 
 	if req.SiteID != "" {
 		if siteID, err := uuid.Parse(req.SiteID); err == nil {
-			query = query.Where("site_id = ?", siteID)
+			query = query.Where("device.site_id = ?", siteID)
 		}
 	}
 
 	if req.GroupID != "" {
 		if groupID, err := uuid.Parse(req.GroupID); err == nil {
-			query = query.Where("group_id = ?", groupID)
+			query = query.Where("device.group_id = ?", groupID)
 		}
 	}
 
@@ -135,13 +172,7 @@ func (h *DeviceHandler) List(c *gin.Context) {
 	if validSortFields[req.SortBy] {
 		sortField = req.SortBy
 	}
-	query = query.Order(sortField + " " + sortOrder)
-
-	total, err := query.Count(c.Request.Context())
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to count devices"})
-		return
-	}
+	query = query.Order("device." + sortField + " " + sortOrder)
 
 	offset := (req.Page - 1) * req.Limit
 	var devices []storage.Device
@@ -225,19 +256,47 @@ func (h *DeviceHandler) Get(c *gin.Context) {
 	var device storage.Device
 	err = h.db.NewSelect().
 		Model(&device).
-		Where("id = ? AND organization_id = ?", deviceID, orgID).
+		Where("device.id = ? AND device.organization_id = ?", deviceID, orgID).
 		Relation("Site").
 		Relation("Group").
 		Relation("HardwareInfo").
-		Relation("HardwareInfo.GPUs").
-		Relation("HardwareInfo.Disks").
-		Relation("HardwareInfo.Disks.Partitions").
-		Relation("HardwareInfo.NetworkInterfaces").
 		Scan(c.Request.Context())
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "device not found"})
 		return
+	}
+
+	// Query GPUs separately if HardwareInfo exists
+	if device.HardwareInfo != nil {
+		var gpus []storage.GPUInfo
+		h.db.NewSelect().
+			Model(&gpus).
+			Where("hardware_info_id = ?", device.HardwareInfo.ID).
+			Scan(c.Request.Context())
+		device.HardwareInfo.GPUs = gpus
+
+		var disks []storage.DiskInfo
+		h.db.NewSelect().
+			Model(&disks).
+			Where("hardware_info_id = ?", device.HardwareInfo.ID).
+			Scan(c.Request.Context())
+		for i := range disks {
+			var partitions []storage.PartitionInfo
+			h.db.NewSelect().
+				Model(&partitions).
+				Where("disk_info_id = ?", disks[i].ID).
+				Scan(c.Request.Context())
+			disks[i].Partitions = partitions
+		}
+		device.HardwareInfo.Disks = disks
+
+		var networkInterfaces []storage.NetworkInterfaceInfo
+		h.db.NewSelect().
+			Model(&networkInterfaces).
+			Where("hardware_info_id = ?", device.HardwareInfo.ID).
+			Scan(c.Request.Context())
+		device.HardwareInfo.NetworkInterfaces = networkInterfaces
 	}
 
 	c.JSON(http.StatusOK, device)

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
 	"errors"
@@ -74,6 +75,18 @@ func (s *AuthService) HashPassword(password string) (string, error) {
 
 func (s *AuthService) VerifyPassword(password, hash string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+}
+
+// HashToken creates a SHA256 hash of a token (for refresh tokens, API keys, etc.)
+func (s *AuthService) HashToken(token string) string {
+	hash := sha256.Sum256([]byte(token))
+	return base64.StdEncoding.EncodeToString(hash[:])
+}
+
+// VerifyToken verifies a token against its SHA256 hash
+func (s *AuthService) VerifyToken(token, hash string) bool {
+	expectedHash := s.HashToken(token)
+	return subtle.ConstantTimeCompare([]byte(expectedHash), []byte(hash)) == 1
 }
 
 func (s *AuthService) GenerateAccessToken(user *UserClaims) (string, error) {

@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/uptrace/bun"
 	"github.com/nexus-rmm/backend/internal/storage"
 )
 
@@ -151,12 +150,6 @@ func (h *RemoteHandler) GetSession(c *gin.Context) {
 		Where("id = ?", sessionID).
 		Relation("Device").
 		Relation("User").
-		Relation("Participants", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Relation("User")
-		}).
-		Relation("Events", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Relation("User").Order("timestamp ASC")
-		}).
 		Scan(c.Request.Context())
 
 	if err != nil {
@@ -169,9 +162,20 @@ func (h *RemoteHandler) GetSession(c *gin.Context) {
 		return
 	}
 
-	participants := make([]ParticipantResponse, len(session.Participants))
-	for i, p := range session.Participants {
-		participants[i] = ParticipantResponse{
+	// Query participants separately
+	var participants []storage.SessionParticipant
+	err = h.db.NewSelect().
+		Model(&participants).
+		Where("session_id = ?", session.ID).
+		Relation("User").
+		Scan(c.Request.Context())
+	if err != nil {
+		participants = []storage.SessionParticipant{}
+	}
+
+	participantResponses := make([]ParticipantResponse, len(participants))
+	for i, p := range participants {
+		participantResponses[i] = ParticipantResponse{
 			UserID:     p.UserID,
 			UserName:   p.User.Name,
 			Role:       p.Role,
@@ -196,7 +200,7 @@ func (h *RemoteHandler) GetSession(c *gin.Context) {
 		EndedAt:       session.EndedAt,
 		Duration:      session.Duration,
 		RecordingPath: session.RecordingPath,
-		Participants:  participants,
+		Participants:  participantResponses,
 	})
 }
 

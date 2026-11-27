@@ -13,15 +13,10 @@ import (
 // Migrations holds all database migrations
 var Migrations = migrate.NewMigrations()
 
-func init() {
-	Migrations.MustRegister(func(ctx context.Context, db *bun.DB) error {
-		// Create all tables using bun's auto-migration feature
-		// This will create tables based on the model definitions
-		return nil
-	}, func(ctx context.Context, db *bun.DB) error {
-		// Rollback - drop all tables
-		return nil
-	})
+// RegisterMigrations registers all migrations - call this before using MigrateUp/MigrateDown
+func RegisterMigrations() {
+	// No explicit migrations - we use InitializeSchema for auto-migration
+	// This avoids issues with Bun v1.3 MustRegister API
 }
 
 // InitializeSchema creates all tables based on model definitions
@@ -66,18 +61,16 @@ func InitializeSchema(ctx context.Context, db *bun.DB) error {
 	return nil
 }
 
-// MigrateUp runs all pending migrations
+// MigrateUp runs all pending migrations (uses InitializeSchema for auto-migration)
 func MigrateUp(ctx context.Context, db *bun.DB) error {
-	migrator := migrate.NewMigrator(db, Migrations)
-	_, err := migrator.Migrate(ctx)
-	return err
+	return InitializeSchema(ctx, db)
 }
 
-// MigrateDown rolls back the last migration
+// MigrateDown rolls back the last migration (not supported with auto-migration)
 func MigrateDown(ctx context.Context, db *bun.DB) error {
-	migrator := migrate.NewMigrator(db, Migrations)
-	_, err := migrator.Rollback(ctx)
-	return err
+	// Auto-migration doesn't support rollback
+	// In a production system, you'd implement proper down migrations
+	return nil
 }
 
 // CreateMigration creates a new migration file

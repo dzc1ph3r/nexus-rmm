@@ -181,6 +181,9 @@ func runGateway(cfg *config.Config, db *storage.Database, authService *auth.Auth
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok", "timestamp": time.Now(), "mode": "gateway"})
 	})
+	router.HEAD("/health", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
 
 	// Gateway routes would go here
 	v1 := router.Group("/api/v1")

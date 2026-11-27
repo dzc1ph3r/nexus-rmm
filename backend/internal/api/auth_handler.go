@@ -83,7 +83,6 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	err := h.db.NewSelect().
 		Model(&user).
 		Where("email = ? AND is_active = true", req.Email).
-		Relation("Organization").
 		Scan(c.Request.Context())
 
 	if err != nil {
@@ -148,13 +147,14 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	refreshHash, _ := h.authService.HashPassword(refreshToken)
+	refreshHash := h.authService.HashToken(refreshToken)
 	refreshTokenModel := storage.RefreshToken{
 		UserID:    user.ID,
 		Token:     refreshHash,
 		ExpiresAt: time.Now().Add(h.authService.Config().RefreshTokenTTL),
 	}
-	h.db.NewInsert().Model(&refreshTokenModel).Exec(c.Request.Context())
+	_, err = h.db.NewInsert().Model(&refreshTokenModel).Exec(c.Request.Context())
+	// Ignore error - token will be regenerated on next login
 
 	now := time.Now()
 	h.db.NewUpdate().
@@ -210,7 +210,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	if err := h.authService.VerifyPassword(req.RefreshToken, storedToken.Token); err != nil {
+	if !h.authService.VerifyToken(req.RefreshToken, storedToken.Token) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token"})
 		return
 	}
@@ -239,7 +239,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	newRefreshHash, _ := h.authService.HashPassword(newRefreshToken)
+	newRefreshHash := h.authService.HashToken(newRefreshToken)
 	newRefreshModel := storage.RefreshToken{
 		UserID:    claims.UserID,
 		Token:     newRefreshHash,

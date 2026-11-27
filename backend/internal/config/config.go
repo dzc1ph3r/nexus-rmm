@@ -30,152 +30,152 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Host         string
-	Port         int
-	Mode         string
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-	IdleTimeout  time.Duration
+	Host         string        `mapstructure:"host"`
+	Port         int           `mapstructure:"port"`
+	Mode         string        `mapstructure:"mode"`
+	ReadTimeout  time.Duration `mapstructure:"read_timeout"`
+	WriteTimeout time.Duration `mapstructure:"write_timeout"`
+	IdleTimeout  time.Duration `mapstructure:"idle_timeout"`
 }
 
 type DatabaseConfig struct {
-	Host            string
-	Port            int
-	User            string
-	Password        string
-	Name            string
-	SSLMode         string
-	MaxConnections  int32
-	MaxIdleConns    int32
-	ConnMaxLifetime time.Duration
+	Host             string        `mapstructure:"host"`
+	Port             int           `mapstructure:"port"`
+	User             string        `mapstructure:"user"`
+	Password         string        `mapstructure:"password"`
+	Name             string        `mapstructure:"name"`
+	SSLMode          string        `mapstructure:"ssl_mode"`
+	MaxConnections   int32         `mapstructure:"max_connections"`
+	MaxIdleConns     int32         `mapstructure:"max_idle_connections"`
+	ConnMaxLifetime  time.Duration `mapstructure:"conn_max_lifetime"`
 }
 
 type RedisConfig struct {
-	Host           string
-	Port           int
-	Password       string
-	DB             int
-	PoolSize       int
-	MinIdleConns   int
+	Host         string `mapstructure:"host"`
+	Port         int    `mapstructure:"port"`
+	Password     string `mapstructure:"password"`
+	DB           int    `mapstructure:"db"`
+	PoolSize     int    `mapstructure:"pool_size"`
+	MinIdleConns int    `mapstructure:"min_idle_conns"`
 }
 
 type AuthConfig struct {
-	JWTSecret        string
-	JWTIssuer        string
-	AccessTokenTTL   time.Duration
-	RefreshTokenTTL  time.Duration
-	MFAIssuer        string
-	BcryptCost       int
-	MaxLoginAttempts int
-	LockoutDuration  time.Duration
-	PasswordMinLength int
-	RequireMFA       bool
+	JWTSecret         string        `mapstructure:"jwt_secret"`
+	JWTIssuer         string        `mapstructure:"jwt_issuer"`
+	AccessTokenTTL    time.Duration `mapstructure:"access_token_ttl"`
+	RefreshTokenTTL   time.Duration `mapstructure:"refresh_token_ttl"`
+	MFAIssuer         string        `mapstructure:"mfa_issuer"`
+	BcryptCost        int           `mapstructure:"bcrypt_cost"`
+	MaxLoginAttempts  int           `mapstructure:"max_login_attempts"`
+	LockoutDuration   time.Duration `mapstructure:"lockout_duration"`
+	PasswordMinLength int           `mapstructure:"password_min_length"`
+	RequireMFA        bool          `mapstructure:"require_mfa"`
 }
 
 type RemoteConfig struct {
-	GatewayHost           string
-	GatewayPort           int
-	WebSocketPath         string
-	TurnServers           []string
-	StunServers           []string
-	ICEServers            []string
-	MaxSessionDuration    time.Duration
-	SessionCleanupInterval time.Duration
-	RecordingEnabled      bool
-	RecordingPath         string
+	GatewayHost           string        `mapstructure:"gateway_host"`
+	GatewayPort           int           `mapstructure:"gateway_port"`
+	WebSocketPath         string        `mapstructure:"websocket_path"`
+	TurnServers           []string      `mapstructure:"turn_servers"`
+	StunServers           []string      `mapstructure:"stun_servers"`
+	ICEServers            []string      `mapstructure:"ice_servers"`
+	MaxSessionDuration    time.Duration `mapstructure:"max_session_duration"`
+	SessionCleanupInterval time.Duration `mapstructure:"session_cleanup_interval"`
+	RecordingEnabled      bool          `mapstructure:"recording_enabled"`
+	RecordingPath         string        `mapstructure:"recording_path"`
 }
 
 type AgentConfig struct {
-	HeartbeatInterval       time.Duration
-	MissedHeartbeatsThreshold int
-	EnrollmentTokenTTL      time.Duration
-	MaxEnrollmentUses       int
-	AutoUpdateEnabled       bool
-	UpdateCheckInterval     time.Duration
-	CommandTimeout          time.Duration
-	FileTransferChunkSize   int
-	MaxConcurrentTasks      int
+	HeartbeatInterval        time.Duration `mapstructure:"heartbeat_interval"`
+	MissedHeartbeatsThreshold int          `mapstructure:"missed_heartbeats_threshold"`
+	EnrollmentTokenTTL       time.Duration `mapstructure:"enrollment_token_ttl"`
+	MaxEnrollmentUses        int           `mapstructure:"max_enrollment_uses"`
+	AutoUpdateEnabled        bool          `mapstructure:"auto_update_enabled"`
+	UpdateCheckInterval      time.Duration `mapstructure:"update_check_interval"`
+	CommandTimeout           time.Duration `mapstructure:"command_timeout"`
+	FileTransferChunkSize    int           `mapstructure:"file_transfer_chunk_size"`
+	MaxConcurrentTasks       int           `mapstructure:"max_concurrent_tasks"`
 }
 
 type MonitoringConfig struct {
-	MetricsInterval          time.Duration
-	RetentionPeriod          time.Duration
-	AlertEvaluationInterval  time.Duration
-	NotificationBatchSize    int
-	MaxAlertsPerDevice       int
+	MetricsInterval         time.Duration `mapstructure:"metrics_interval"`
+	RetentionPeriod         time.Duration `mapstructure:"retention_period"`
+	AlertEvaluationInterval time.Duration `mapstructure:"alert_evaluation_interval"`
+	NotificationBatchSize   int           `mapstructure:"notification_batch_size"`
+	MaxAlertsPerDevice      int           `mapstructure:"max_alerts_per_device"`
 }
 
 type AutomationConfig struct {
-	MaxConcurrentJobs int
-	JobTimeout        time.Duration
-	RetryAttempts     int
-	RetryDelay        time.Duration
-	SchedulePrecision time.Duration
+	MaxConcurrentJobs int           `mapstructure:"max_concurrent_jobs"`
+	JobTimeout        time.Duration `mapstructure:"job_timeout"`
+	RetryAttempts     int           `mapstructure:"retry_attempts"`
+	RetryDelay        time.Duration `mapstructure:"retry_delay"`
+	SchedulePrecision time.Duration `mapstructure:"schedule_precision"`
 }
 
 type NotificationConfig struct {
-	Email    EmailConfig
-	Webhook  WebhookConfig
-	Telegram TelegramConfig
+	Email    EmailConfig  `mapstructure:"email"`
+	Webhook  WebhookConfig `mapstructure:"webhook"`
+	Telegram TelegramConfig `mapstructure:"telegram"`
 }
 
 type EmailConfig struct {
-	Enabled      bool
-	SMTPHost     string
-	SMTPPort     int
-	SMTPUser     string
-	SMTPPassword string
-	FromAddress  string
-	FromName     string
-	UseTLS       bool
+	Enabled      bool   `mapstructure:"enabled"`
+	SMTPHost     string `mapstructure:"smtp_host"`
+	SMTPPort     int    `mapstructure:"smtp_port"`
+	SMTPUser     string `mapstructure:"smtp_user"`
+	SMTPPassword string `mapstructure:"smtp_password"`
+	FromAddress  string `mapstructure:"from_address"`
+	FromName     string `mapstructure:"from_name"`
+	UseTLS       bool   `mapstructure:"use_tls"`
 }
 
 type WebhookConfig struct {
-	Enabled        bool
-	DefaultTimeout time.Duration
-	MaxRetries     int
+	Enabled        bool          `mapstructure:"enabled"`
+	DefaultTimeout time.Duration `mapstructure:"default_timeout"`
+	MaxRetries     int           `mapstructure:"max_retries"`
 }
 
 type TelegramConfig struct {
-	Enabled  bool
-	BotToken string
-	ChatID   string
+	Enabled  bool   `mapstructure:"enabled"`
+	BotToken string `mapstructure:"bot_token"`
+	ChatID   string `mapstructure:"chat_id"`
 }
 
 type LoggingConfig struct {
-	Level      string
-	Format     string
-	Output     string
-	FilePath   string
-	MaxSize    int
-	MaxBackups int
-	MaxAge     int
-	Compress   bool
+	Level      string `mapstructure:"level"`
+	Format     string `mapstructure:"format"`
+	Output     string `mapstructure:"output"`
+	FilePath   string `mapstructure:"file_path"`
+	MaxSize    int    `mapstructure:"max_size"`
+	MaxBackups int    `mapstructure:"max_backups"`
+	MaxAge     int    `mapstructure:"max_age"`
+	Compress   bool   `mapstructure:"compress"`
 }
 
 type TLSConfig struct {
-	CertFile        string
-	KeyFile         string
-	CAFile          string
-	AutoCert        bool
-	AutoCertDomains []string
-	AutoCertEmail   string
-	AutoCertCache   string
+	CertFile        string   `mapstructure:"cert_file"`
+	KeyFile         string   `mapstructure:"key_file"`
+	CAFile          string   `mapstructure:"ca_file"`
+	AutoCert        bool     `mapstructure:"auto_cert"`
+	AutoCertDomains []string `mapstructure:"auto_cert_domains"`
+	AutoCertEmail   string   `mapstructure:"auto_cert_email"`
+	AutoCertCache   string   `mapstructure:"auto_cert_cache"`
 }
 
 type LicenseConfig struct {
-	Enabled             bool
-	LicenseServerURL    string
-	PublicKey           string
-	GracePeriod         time.Duration
-	CheckInterval       time.Duration
+	Enabled             bool          `mapstructure:"enabled"`
+	LicenseServerURL    string        `mapstructure:"license_server_url"`
+	PublicKey           string        `mapstructure:"public_key"`
+	GracePeriod         time.Duration `mapstructure:"grace_period"`
+	CheckInterval       time.Duration `mapstructure:"check_interval"`
 }
 
 type AuditConfig struct {
-	Enabled         bool
-	RetentionPeriod time.Duration
-	BatchSize       int
-	FlushInterval   time.Duration
+	Enabled         bool          `mapstructure:"enabled"`
+	RetentionPeriod time.Duration `mapstructure:"retention_period"`
+	BatchSize       int           `mapstructure:"batch_size"`
+	FlushInterval   time.Duration `mapstructure:"flush_interval"`
 }
 
 func Load() (*Config, error) {
